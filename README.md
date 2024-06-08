@@ -26,7 +26,7 @@ To get started with AutoSoroban, follow these steps:
 2. **Install Dependencies**:
     Ensure you have Ansible installed. You can install it using pip:
     ```bash
-    pip install ansible
+    brew install ansible
     ```
 
 3. **Configure Your Environment**:
