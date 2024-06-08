@@ -1,0 +1,18 @@
+- name: Manage Soroban contract updates
+  hosts: localhost
+  tasks:
+    - name: Get contract ID
+      shell: soroban contract id --contract my_contract_optimized.wasm
+      register: contract_id
+
+    - name: Backup current contract
+      shell: soroban contract fetch --contract {{ contract_id.stdout }} --output old_contract.wasm
+
+    - name: Build new contract
+      shell: soroban contract build --source new_source --output new_contract.wasm
+
+    - name: Optimize new contract
+      shell: soroban contract optimize --wasm new_contract.wasm --output new_contract_optimized.wasm
+
+    - name: Deploy new contract
+      shell: soroban contract deploy --wasm new_contract_optimized.wasm --network testnet --source <source_account>

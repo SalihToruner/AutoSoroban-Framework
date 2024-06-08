@@ -1,0 +1,42 @@
+---
+- name: Install Stellar Soroban on macOS
+  hosts: localhost
+  become: true
+  tasks:
+    - name: Ensure curl is installed
+      homebrew:
+        name: curl
+        state: present
+
+    - name: Install Rust
+      shell: curl --proto '=https' --tlsv1.2 -sSf https://sh.rustup.rs | sh -s -- -y
+      args:
+        executable: /bin/bash
+      environment:
+        PATH: "{{ ansible_env.PATH }}:/Users/{{ ansible_user }}/.cargo/bin"
+
+    - name: Source cargo environment
+      shell: source /Users/{{ ansible_user }}/.cargo/env
+      args:
+        executable: /bin/bash
+
+    - name: Add wasm32-unknown-unknown target
+      shell: rustup target add wasm32-unknown-unknown
+      environment:
+        PATH: "{{ ansible_env.PATH }}:/Users/{{ ansible_user }}/.cargo/bin"
+
+    - name: Install soroban-cli
+      shell: cargo install --locked soroban-cli
+      environment:
+        PATH: "{{ ansible_env.PATH }}:/Users/{{ ansible_user }}/.cargo/bin"
+
+    - name: Ensure cargo bin directory is in PATH
+      lineinfile:
+        path: /Users/{{ ansible_user }}/.bash_profile
+        line: 'export PATH="$PATH:/Users/{{ ansible_user }}/.cargo/bin"'
+        create: yes
+
+    - name: Source bash_profile to update PATH
+      shell: source /Users/{{ ansible_user }}/.bash_profile
+      args:
+        executable: /bin/bash

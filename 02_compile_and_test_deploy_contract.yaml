@@ -1,0 +1,47 @@
+---
+- name: Build, Test, and Deploy Soroban Smart Contract
+  hosts: localhost
+  vars:
+    contract_path: "{{ playbook_dir }}/contract"
+    wasm_file: "{{ contract_path }}/target/wasm32-unknown-unknown/release/hello_world.wasm"
+    network_passphrase: "Test SDF Network ; September 2015"
+    source_account: "SCSKTUTW6IRP77YUW5KMGWTYIC5MBWM2MBIJ2LAUQTRPLBG5CTXBW67K"
+    rpc_url: "https://soroban-testnet.stellar.org"
+    network: "testnet"
+  tasks:
+    - name: Run Soroban contract init
+      command: soroban contract init "{{ playbook_dir }}/contract"
+      environment:
+        PATH: "{{ ansible_env.HOME }}/.cargo/bin:{{ ansible_env.PATH }}"
+
+    - name: Build the smart contract
+      command: soroban contract build
+      args:
+        chdir: "{{ playbook_dir }}/contract"
+      environment:
+        PATH: "{{ ansible_env.HOME }}/.cargo/bin:{{ ansible_env.PATH }}"
+
+    - name: Install wasm32-unknown-unknown target
+      command: rustup target add wasm32-unknown-unknown
+
+    - name: Run contract tests
+      command: cargo test
+      args:
+        chdir: contract/
+
+    - name: Check if WASM file exists
+      stat:
+        path: "{{ wasm_file }}"
+      register: wasm_file_stat
+
+    - name: Deploy smart contract
+      command: >
+        soroban contract deploy
+        --wasm {{ wasm_file }}
+        --network-passphrase "{{ network_passphrase }}"
+        --source-account "{{ source_account }}"
+        --rpc-url {{ rpc_url }}
+        --network {{ network }}
+      environment:
+        PATH: "{{ ansible_env.HOME }}/.cargo/bin:{{ ansible_env.PATH }}"
+      when: wasm_file_stat.stat.exists

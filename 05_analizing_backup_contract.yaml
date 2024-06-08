@@ -1,0 +1,24 @@
+- name: Analizing,Backup and restore Soroban contract data
+  hosts: localhost
+  tasks:
+    - name: Get contract ID
+      shell: soroban contract id --contract my_contract_optimized.wasm
+      register: contract_id
+
+    - name: Read contract data
+      shell: soroban contract read --contract {{ contract_id.stdout }} --entry <entry_id>
+      register: entry_value
+
+    - name: Generate report from contract data
+      shell: echo "Contract data: {{ entry_value.stdout }}" > contract_report.txt
+
+    - name: Backup contract data
+      shell: soroban contract read --contract {{ contract_id.stdout }} --entry <entry_id>
+      register: backup_data
+
+    - name: Print backup data
+      debug:
+        msg: "Backup data is {{ backup_data.stdout }}"
+
+    - name: Restore contract data
+      shell: soroban contract restore --contract {{ contract_id.stdout }} --entry <entry_id> --value "{{ backup_data.stdout }}"
